@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Cloud formation template for warehouse item project'
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Name for the S3 bucket
+    Default: 'warehouse-item-bucket'
+
+  TopicName:
+    Type: String
+    Description: Name for the SNS topic
+    Default: 'warehouse-item-topic'
+
+Resources:
+  WarehouseItemBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: Suspended
+      Tags:
+        - Key: Name
+          Value: !Ref BucketName
+        - Key: Environment
+          Value: Sample
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  WarehouseItemTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Ref TopicName
+      DisplayName: !Ref TopicName
+      Tags:
+        - Key: Name
+          Value: !Ref TopicName
+        - Key: Environment
+          Value: Sample
+
+Outputs:
+  S3BucketName:
+    Description: Name of the S3 bucket
+    Value: !Ref WarehouseItemBucket
+
+  S3BucketArn:
+    Description: ARN of the S3 bucket
+    Value: !GetAtt WarehouseItemBucket.Arn
+
+  SNSTopicName:
+    Description: Name of the SNS topic
+    Value: !GetAtt WarehouseItemTopic.TopicName
+
+  SNSTopicArn:
+    Description: ARN of the SNS topic
+    Value: !Ref WarehouseItemTopic

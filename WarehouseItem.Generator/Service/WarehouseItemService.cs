@@ -1,5 +1,6 @@
 using WarehouseItem.Generator.DTO;
 using WarehouseItem.Generator.Generator;
+using WarehouseItem.Generator.Service.Messaging;
 
 namespace WarehouseItem.Generator.Service;
 
@@ -8,14 +9,13 @@ namespace WarehouseItem.Generator.Service;
 /// </summary>
 public sealed class WarehouseItemService(
     WarehouseItemGenerator generator,
-    IWarehouseItemCache cache) : IWarehouseItemService
+    IWarehouseItemCache cache,
+    IPublisherService publisherService) : IWarehouseItemService
 {
     /// <summary>
-    /// Получить товар по идентификатору. Если товар не найден в кэше, генерирует новый и сохраняет в кэш.
+    /// Получить товар по идентификатору. Если товар не найден в кэше, генерирует новый,
+    /// сохраняет в кэш и отправляет в SNS для записи в S3.
     /// </summary>
-    /// <param name="id">Идентификатор товара.</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
-    /// <returns>DTO товара.</returns>
     public async Task<WarehouseItemDto> GetAsync(int id, CancellationToken cancellationToken = default)
     {
         var cached = await cache.GetAsync(id, cancellationToken);
@@ -26,6 +26,7 @@ public sealed class WarehouseItemService(
 
         var generated = generator.Generate(id);
         await cache.SetAsync(id, generated, cancellationToken);
+        await publisherService.SendMessage(generated);
 
         return generated;
     }
