@@ -7,7 +7,7 @@ namespace WarehouseItem.Gateway.LoadBalancer;
 
 /// <summary>
 /// Query-based балансировщик нагрузки: выбирает downstream по query-параметру <c>id</c>.
-/// Если параметр отсутствует/невалиден — выбирает случайный downstream.
+/// Если параметр отсутствует/невалиден - выбирает случайный downstream.
 /// </summary>
 public sealed class QueryBasedLoadBalancer(
     ILogger<QueryBasedLoadBalancer> logger,

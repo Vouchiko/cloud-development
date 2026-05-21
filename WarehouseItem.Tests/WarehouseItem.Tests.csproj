@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Aspire.Hosting.Testing" Version="13.1.0"/>
+        <PackageReference Include="coverlet.collector" Version="6.0.4"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>
+        <PackageReference Include="MartinCostello.Logging.XUnit" Version="0.7.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="System.Net"/>
+        <Using Include="Microsoft.Extensions.DependencyInjection"/>
+        <Using Include="Aspire.Hosting.ApplicationModel"/>
+        <Using Include="Aspire.Hosting.Testing"/>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\WarehouseItem.AppHost\WarehouseItem.AppHost.csproj" />
+        <ProjectReference Include="..\WarehouseItem.Generator\WarehouseItem.Generator.csproj" />
+        <ProjectReference Include="..\WarehouseItem.Gateway\WarehouseItem.Gateway.csproj" />
+        <ProjectReference Include="..\WarehouseItem.FileService\WarehouseItem.FileService.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\WarehouseItem.AppHost\CloudFormation\warehouse-item-template-sns-s3.yaml">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>CloudFormation\warehouse-item-template-sns-s3.yaml</Link>
+        </Content>
+    </ItemGroup>
+
+</Project>

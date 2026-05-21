@@ -1,0 +1,62 @@
+openapi: "3.0.0"
+info:
+  title: Warehouse Item API
+  version: "1.0"
+  description: |
+    API Gateway для WarehouseItem.Generator Cloud Function.
+
+paths:
+  /warehouse-item:
+    get:
+      operationId: getWarehouseItem
+      summary: Получить товар по идентификатору
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      x-yc-apigateway-integration:
+        type: cloud_functions
+
+        function_id: d4epkr7rqp8n8e7ge24a
+
+        service_account_id: aje3vcvi8rftdq6onrtt
+      responses:
+        "200":
+          description: Данные товара
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WarehouseItemDto"
+        "400":
+          description: Некорректный запрос
+
+components:
+  schemas:
+    WarehouseItemDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        productName:
+          type: string
+        category:
+          type: string
+        stockQuantity:
+          type: integer
+        unitPrice:
+          type: number
+        unitWeight:
+          type: number
+        unitDimensions:
+          type: string
+        isFragile:
+          type: boolean
+        lastDeliveryDate:
+          type: string
+          format: date
+        nextDeliveryDate:
+          type: string
+          format: date

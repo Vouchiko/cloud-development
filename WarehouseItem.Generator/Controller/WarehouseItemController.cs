@@ -22,9 +22,9 @@ public sealed class WarehouseItemController(ILogger<WarehouseItemController> log
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<WarehouseItemDto>> Get([FromQuery] int id, CancellationToken cancellationToken)
     {
-        if (id < 0)
+        if (id <= 0)
         {
-            return BadRequest(new { message = "id cannot be negative" });
+            return BadRequest(new { message = "id must be greater than 0" });
         }
 
         logger.LogInformation("Request warehouse item id={id}.", id);

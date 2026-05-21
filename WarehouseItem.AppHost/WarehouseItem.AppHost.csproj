@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.2" />
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.1.0" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,12 +8,14 @@
     <UserSecretsId>ed7e1e47-dc98-4419-8424-85412466aa9b</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.2" />
-    <PackageReference Include="Aspire.Hosting.Redis" Version="9.5.2" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.1.0" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="13.1.0" />
+    <PackageReference Include="LocalStack.Aspire.Hosting" Version="9.5.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WarehouseItem.Generator\WarehouseItem.Generator.csproj" />
     <ProjectReference Include="..\Client.Wasm\Client.Wasm.csproj" />
     <ProjectReference Include="..\WarehouseItem.Gateway\WarehouseItem.Gateway.csproj" />
+    <ProjectReference Include="..\WarehouseItem.FileService\WarehouseItem.FileService.csproj" />
   </ItemGroup>
 </Project>

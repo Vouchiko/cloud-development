@@ -11,7 +11,6 @@ using OpenTelemetry.Trace;
 
 namespace WarehouseItem.ServiceDefaults;
 
-// Common cross-service wiring for Aspire: telemetry, health checks, service discovery, and resilient HttpClient.
 public static class Extensions
 {
     private const string ReadyPath = "/health";
