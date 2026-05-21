@@ -4,6 +4,7 @@ using Aspire.Hosting.LocalStack.Container;
 var builder = DistributedApplication.CreateBuilder(args);
 
 var cache = builder.AddRedis("warehouse-item-cache")
+    .WithImageTag("7.4-alpine")
     .WithRedisInsight(containerName: "warehouse-item-insight");
 
 var gateway = builder.AddProject<Projects.WarehouseItem_Gateway>("gateway")

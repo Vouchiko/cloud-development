@@ -8,7 +8,15 @@ using WarehouseItem.ServiceDefaults;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-builder.AddRedisDistributedCache("warehouse-item-cache");
+builder.AddRedisDistributedCache("warehouse-item-cache", configureOptions: options =>
+{
+    options.AbortOnConnectFail = false;
+    options.SslClientAuthenticationOptions = host => new System.Net.Security.SslClientAuthenticationOptions
+    {
+        TargetHost = host,
+        RemoteCertificateValidationCallback = (_, _, _, _) => true // dev: доверяем self-signed сертификату Aspire
+    };
+});
 
 builder.Services.AddLocalStack(builder.Configuration);
 builder.Services.AddAwsService<IAmazonSimpleNotificationService>();
