@@ -1,9 +1,11 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -18,8 +20,9 @@ public class Handler
     };
 
     private readonly IAmazonSQS _sqs;
+    private readonly IAmazonS3 _s3;
     private readonly string _queueUrl;
-    private readonly IMemoryCache _cache;
+    private readonly string _bucket;
     private readonly ILogger<Handler> _logger;
 
     public Handler()
@@ -30,25 +33,33 @@ public class Handler
 
         var services = new ServiceCollection();
         services.AddLogging(b => b.AddConsole());
-        services.AddMemoryCache();
         services.AddSingleton<IConfiguration>(config);
+
+        var creds = new BasicAWSCredentials(
+            config["SQS_ACCESS_KEY"] ?? "",
+            config["SQS_SECRET_KEY"] ?? "");
 
         var sqsConfig = new AmazonSQSConfig
         {
             ServiceURL = config["SQS_SERVICE_URL"] ?? "https://message-queue.api.cloud.yandex.net",
             AuthenticationRegion = "ru-central1"
         };
-        var creds = new BasicAWSCredentials(
-            config["SQS_ACCESS_KEY"] ?? "",
-            config["SQS_SECRET_KEY"] ?? "");
         services.AddSingleton<IAmazonSQS>(_ => new AmazonSQSClient(creds, sqsConfig));
+
+        var s3Config = new AmazonS3Config
+        {
+            ServiceURL = config["S3_SERVICE_URL"] ?? "https://storage.yandexcloud.net",
+            ForcePathStyle = true
+        };
+        services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(creds, s3Config));
 
         var provider = services.BuildServiceProvider();
         _sqs = provider.GetRequiredService<IAmazonSQS>();
-        _cache = provider.GetRequiredService<IMemoryCache>();
+        _s3 = provider.GetRequiredService<IAmazonS3>();
         _logger = provider.GetRequiredService<ILogger<Handler>>();
         _queueUrl = config["SQS_QUEUE_URL"]
             ?? throw new InvalidOperationException("SQS_QUEUE_URL is not set");
+        _bucket = config["S3_BUCKET"] ?? "warehouse-item-files";
     }
 
     public async Task<Response> FunctionHandler(Request request)
@@ -61,12 +72,16 @@ public class Handler
             return new Response { StatusCode = 400, Body = "id must be a positive integer" };
         }
 
-        var item = await _cache.GetOrCreateAsync($"wh-{id}", entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
-            return Task.FromResult(WarehouseItemGenerator.Generate(id));
-        });
+        var key = $"warehouse_item_{id}.json";
 
+        var cachedJson = await TryReadFromBucketAsync(key);
+        if (cachedJson is not null)
+        {
+            _logger.LogInformation("Cache hit in bucket for id={Id}", id);
+            return BuildJsonResponse(cachedJson);
+        }
+
+        var item = WarehouseItemGenerator.Generate(id);
         var json = JsonSerializer.Serialize(item, JsonOptions);
 
         try
@@ -83,17 +98,38 @@ public class Handler
             _logger.LogError(ex, "Failed to publish to YMQ");
         }
 
-        return new Response
-        {
-            StatusCode = 200,
-            Headers = new Dictionary<string, string>
-            {
-                ["Content-Type"] = "application/json",
-                ["Access-Control-Allow-Origin"] = "*"
-            },
-            Body = json
-        };
+        return BuildJsonResponse(json);
     }
+
+    private async Task<string?> TryReadFromBucketAsync(string key)
+    {
+        try
+        {
+            using var response = await _s3.GetObjectAsync(_bucket, key);
+            using var reader = new StreamReader(response.ResponseStream);
+            return await reader.ReadToEndAsync();
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read {Key} from bucket", key);
+            return null;
+        }
+    }
+
+    private static Response BuildJsonResponse(string body) => new()
+    {
+        StatusCode = 200,
+        Headers = new Dictionary<string, string>
+        {
+            ["Content-Type"] = "application/json",
+            ["Access-Control-Allow-Origin"] = "*"
+        },
+        Body = body
+    };
 }
 
 public class Request
